@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["chenyan.mnn@taobao.com"]
   spec.summary       = "将cocoapods installer过程中download_dependencies改为多线程，提高效率"
   spec.description   = "将cocoapods installer过程中download_dependencies改为20个线程并发，提高pod update的效率"
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/mahaiyannn/cocoapods-multithread-installpod"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*.rb"]
