@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/cocoapods-multithread-installpod.iml" filepath="$PROJECT_DIR$/.idea/cocoapods-multithread-installpod.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../cocoapods-timeconsuming/.idea/cocoapods-timeconsuming.iml" filepath="$PROJECT_DIR$/../cocoapods-timeconsuming/.idea/cocoapods-timeconsuming.iml" />
+    </modules>
+  </component>
+</project>
