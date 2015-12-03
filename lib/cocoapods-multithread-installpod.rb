@@ -27,7 +27,9 @@ module Pod
                   install_source_of_pod(spec.name)
                 end
               else
-                UI.titled_section("Using #{spec}", title_options)
+                UI.titled_section("Using #{spec}", title_options) do
+                  create_pod_installer(spec.name)
+                end
               end
             end
           end
@@ -38,20 +40,42 @@ module Pod
     end
   end
 
-  module UserInterface
-    class << self
-      def wrap_string(string, indent = 0)
-        if disable_wrap
-          string
-        else
-          first_space = ' ' * indent
-          # indented = CLAide::Helper.wrap_with_indent(string, indent, 9999)
-          # first_space + indented
+
+  module Downloader
+    # The class responsible for managing Pod downloads, transparently caching
+    # them in a cache directory.
+    #
+    class Cache
+
+      def ensure_matching_version
+        Thread.main do
+          version_file = root + 'VERSION'
+          version = version_file.read.strip if version_file.file?
+
+          root.rmtree if version != Pod::VERSION && root.exist?
+          root.mkpath
+
+          version_file.open('w') { |f| f << Pod::VERSION }
         end
       end
+
     end
+
   end
 
 end
 
+module UserInterface
+  class << self
+    def wrap_string(string, indent = 0)
+      if disable_wrap
+        string
+      else
+        first_space = ' ' * indent
+        # indented = CLAide::Helper.wrap_with_indent(string, indent, 9999)
+        # first_space + indented
+      end
+    end
+  end
+end
 
