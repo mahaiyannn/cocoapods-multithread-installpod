@@ -48,21 +48,18 @@ module Pod
     # them in a cache directory.
     #
     class Cache
-
+      @@mutex=Mutex.new
       def ensure_matching_version
-          version_file = root + 'VERSION'
-          version = version_file.read.strip if version_file.file?
+        @@mutex.lock
+        version_file = root + 'VERSION'
+        version = version_file.read.strip if version_file.file?
 
-          root.rmtree if version != Pod::VERSION && root.exist?
-          root.mkpath
-
-          Thread.main do
-            version_file.open('w') { |f| f << Pod::VERSION }
-          end
+        root.rmtree if version != Pod::VERSION && root.exist?
+        root.mkpath
+        version_file.open('w') { |f| f << Pod::VERSION }
+        @@mutex.unlock
       end
-
     end
-
   end
 
 end
