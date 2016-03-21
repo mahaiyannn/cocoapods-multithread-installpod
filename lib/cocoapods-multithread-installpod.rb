@@ -18,18 +18,18 @@ if Pod::VERSION=='0.39.0'
                 if pods_to_install.include?(spec.name)
                   if sandbox_state.changed.include?(spec.name) && sandbox.manifest
                     previous = sandbox.manifest.version(spec.name)
-                    title = "Thread.current #{Thread.current},Installing #{spec.name} #{spec.version} (was #{previous})"
+                    title = "Installing #{spec.name} #{spec.version} (was #{previous})"
                   else
-                    title = "Thread.current #{Thread.current},Installing #{spec}"
+                    title = "Installing #{spec}"
                   end
                   UI.titled_section(title.green, title_options) do
                     install_source_of_pod(spec.name)
-                    UI.titled_section("Thread.current #{Thread.current}, Installed #{spec}", title_options)
+                    #UI.titled_section("Installed #{spec}", title_options)
                   end
                 else
-                  UI.titled_section("Thread.current #{Thread.current},Using #{spec}", title_options) do
+                  UI.titled_section("Using #{spec}", title_options) do
                     create_pod_installer(spec.name)
-                    UI.titled_section("Thread.current #{Thread.current}, Installed #{spec}", title_options)
+                    #UI.titled_section("Installed #{spec}", title_options)
                   end
                 end
               end
