@@ -1,7 +1,7 @@
 require "cocoapods-multithread-installpod/version"
 require 'thread'
 
-if Pod::VERSION=='0.39.0'
+if Pod::VERSION=='0.39.0' or Pod::VERSION=='1.0.0'
   module Pod
     class Installer
       def install_pod_sources
@@ -118,18 +118,4 @@ elsif Pod::VERSION=='0.35.0'
   end
 end
 
-
-# module UserInterface
-#   class << self
-#     def wrap_string(string, indent = 0)
-#       if disable_wrap
-#         string
-#       else
-#         first_space = ' ' * indent
-#         # indented = CLAide::Helper.wrap_with_indent(string, indent, 9999)
-#         # first_space + indented
-#       end
-#     end
-#   end
-# end
 

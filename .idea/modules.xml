@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/cocoapods-multithread-installpod.iml" filepath="$PROJECT_DIR$/.idea/cocoapods-multithread-installpod.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../cocoapods-timeconsuming/.idea/cocoapods-timeconsuming.iml" filepath="$PROJECT_DIR$/../cocoapods-timeconsuming/.idea/cocoapods-timeconsuming.iml" />
     </modules>
   </component>
 </project>
