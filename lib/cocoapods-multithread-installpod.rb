@@ -1,7 +1,7 @@
 require "cocoapods-multithread-installpod/version"
 require 'thread'
 
-if Pod::VERSION=='0.39.0' or Pod::VERSION=='1.0.0'
+if Pod::VERSION>='0.39.0'
   module Pod
     class Installer
       def install_pod_sources
