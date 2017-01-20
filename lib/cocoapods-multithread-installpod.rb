@@ -37,8 +37,8 @@ if Pod::VERSION>='0.39.0'
             end
           end
         end
+        UI.titled_section("Installing... Please Wait...", title_options)
         workers.map(&:join)
-
       end
     end
 
