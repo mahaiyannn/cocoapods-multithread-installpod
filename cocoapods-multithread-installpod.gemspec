@@ -21,5 +21,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "bundler", "~> 1.6"
   spec.add_dependency "rake"
   spec.add_dependency "cocoapods"
-  spec.add_dependency "thread"
+  spec.add_dependency "concurrent-ruby"
+  spec.add_dependency 'tty-spinner'
 end
