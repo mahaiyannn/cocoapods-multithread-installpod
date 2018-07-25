@@ -1,121 +1,69 @@
 require "cocoapods-multithread-installpod/version"
-require 'thread'
+require 'concurrent'
 
-if Pod::VERSION>='0.39.0'
-  module Pod
-    class Installer
-      def install_pod_sources
-        @installed_specs = []
-        pods_to_install = sandbox_state.added | sandbox_state.changed
-        title_options = { :verbose_prefix => '-> '.green }
+module Pod
+  class Installer
 
-        work_q = Queue.new
-        root_specs.sort_by(&:name).each{|spec| work_q.push spec }
-        workers = (0...20).map do
-          Thread.new do
-            begin
-              while spec = work_q.pop(true)
-                if pods_to_install.include?(spec.name)
-                  if sandbox_state.changed.include?(spec.name) && sandbox.manifest
-                    previous = sandbox.manifest.version(spec.name)
-                    title = "Installing #{spec.name} #{spec.version} (was #{previous})"
-                  else
-                    title = "Installing #{spec}"
-                  end
-                  UI.titled_section(title.green, title_options) do
-                    install_source_of_pod(spec.name)
-                    #UI.titled_section("Installed #{spec}", title_options)
-                  end
-                else
-                  UI.titled_section("Using #{spec}", title_options) do
-                    create_pod_installer(spec.name)
-                    #UI.titled_section("Installed #{spec}", title_options)
-                  end
-                end
-              end
-            rescue ThreadError
+    alias_method :multi_thread_install_pod_sources, :install_pod_sources
+    def install_pod_sources
+      @worker = Concurrent::FixedThreadPool.new(5)
+      UI.set_spinners('Downloading dependencies')
+      @installed_specs = []
+      pods_to_install = sandbox_state.added | sandbox_state.changed
+      title_options = { :verbose_prefix => '-> '.green }
+      root_specs.sort_by(&:name).each do |spec|
+        if pods_to_install.include?(spec.name)
+          @worker.post do
+            if sandbox_state.changed.include?(spec.name) && sandbox.manifest
+              current_version = spec.version
+              previous_version = sandbox.manifest.version(spec.name)
+              has_changed_version = current_version != previous_version
+              current_repo = analysis_result.specs_by_source.detect { |key, values| break key if values.map(&:name).include?(spec.name) }
+              current_repo &&= current_repo.url || current_repo.name
+              previous_spec_repo = sandbox.manifest.spec_repo(spec.name)
+              has_changed_repo = !previous_spec_repo.nil? && current_repo && !current_repo.casecmp(previous_spec_repo).zero?
+              title = "Installing #{spec.name} #{spec.version}"
+              title << " (was #{previous_version} and source changed to `#{current_repo}` from `#{previous_spec_repo}`)" if has_changed_version && has_changed_repo
+              title << " (was #{previous_version})" if has_changed_version && !has_changed_repo
+              title << " (source changed to `#{current_repo}` from `#{previous_spec_repo}`)" if !has_changed_version && has_changed_repo
+            else
+              title = "Installing #{spec}"
             end
-          end
-        end
-        UI.titled_section("Installing... Please Wait...", title_options)
-        workers.map(&:join)
-      end
-    end
-
-
-    module Downloader
-      # The class responsible for managing Pod downloads, transparently caching
-      # them in a cache directory.
-      #
-      class Cache
-        @@mutex=Mutex.new
-        def ensure_matching_version
-          @@mutex.lock
-          version_file = root + 'VERSION'
-          version = version_file.read.strip if version_file.file?
-
-          root.rmtree if version != Pod::VERSION && root.exist?
-          root.mkpath
-          version_file.open('w') { |f| f << Pod::VERSION }
-          @@mutex.unlock
-        end
-      end
-    end
-  end
-
-elsif Pod::VERSION=='0.35.0'
-  module Pod
-    class Installer
-      def install_pod_sources
-        @installed_specs = []
-        pods_to_install = sandbox_state.added | sandbox_state.changed
-        title_options = { :verbose_prefix => '-> '.green }
-        sorted_root_specs = root_specs.sort_by(&:name)
-        threads=[]
-        max_thread_count = 20.0
-        per_thead_task_count =(sorted_root_specs.count/max_thread_count).ceil
-        i = 0
-        while i < max_thread_count
-          sub_sorted_root_specs = sorted_root_specs[i*per_thead_task_count, per_thead_task_count]
-          if sub_sorted_root_specs != nil
-            threads << Thread.new(sub_sorted_root_specs) do |specs|
-              specs.each do |spec|
-                if pods_to_install.include?(spec.name)
-                  if sandbox_state.changed.include?(spec.name) && sandbox.manifest
-                    previous = sandbox.manifest.version(spec.name)
-                    title = "Installing #{spec.name} #{spec.version} (was #{previous})"
-                  else
-                    title = "Installing #{spec}"
-                  end
-                  UI.titled_section(title.green, title_options) do
-                    install_source_of_pod(spec.name)
-                  end
-                else
-                  UI.titled_section("Using #{spec}", title_options)
-                end
-              end
+            UI.titled_section(title.green, title_options) do
+              install_source_of_pod(spec.name)
             end
+            UI.report_status(true)
           end
-          i+=1
+        else
+          UI.titled_section("Using #{spec}", title_options) do
+            create_pod_installer(spec.name)
+          end
         end
-        threads.each{|t| t.join}
       end
+      @worker.shutdown
+      @worker.wait_for_termination
+      UI.set_spinners
     end
 
-    module UserInterface
-      class << self
-        def wrap_string(string, indent = 0)
-          if disable_wrap
-            string
-          else
-            first_space = ' ' * indent
-            # indented = CLAide::Helper.wrap_with_indent(string, indent, 9999)
-            # first_space + indented
-          end
+    class Analyzer
+
+      alias_method :ori_fetch_external_sources, :fetch_external_sources
+      def fetch_external_sources(podfile_state)
+        @worker = Concurrent::FixedThreadPool.new(5)
+        UI.set_spinners('Fetching external sources')
+        ori_fetch_external_sources(podfile_state)
+        @worker.shutdown
+        @worker.wait_for_termination
+        UI.set_spinners
+      end
+
+      alias_method :ori_fetch_external_source, :fetch_external_source
+      def fetch_external_source(dependency, use_lockfile_options)
+        @worker.post do
+          ori_fetch_external_source(dependency, use_lockfile_options)
+          UI.report_status(true)
         end
       end
     end
   end
 end
-
-
